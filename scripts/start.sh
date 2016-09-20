@@ -4,10 +4,12 @@ $oc version
 $oc cluster up
 # hotfix for a alpha3 which was broken
 #$oc cluster up --version=v1.3.0-alpha.2
-# create CICD namesapce and setup service accounts - then create CI/CD infrastructure
+# create CICD namesapce and setup service accounts
 $oc new-project cicd --display-name="CI/CD"
 $oc policy add-role-to-user edit system:serviceaccount:cicd:default -n cicd
-$oc process -f complete.yaml | oca create -f -
+# create CI/CD infrastructure
+$oc process -f complete_template.yaml | oca create -f -
+
 
 # create dev and stage projects and switch back to cicd
 $oc new-project dev --display-name="Tasks - Dev" > /dev/null
@@ -34,6 +36,8 @@ while [ ! $RETURN -eq 200 ]
 echo ""
 echo "Gogs is online: http://gogs-cicd.10.40.3.141.xip.io/user/login"
 $oc get dc gogs -o yaml | grep GOGS -A 1
+# proof that jobs is started when jenkins is online
+$oc start-build playground-pipeline
 echo "Waiting for a jenkins to come online"
 x=1
 RETURN=$(curl -o /dev/null -sL -w "%{http_code}" http://jenkins-cicd.10.40.3.141.xip.io/login)
@@ -53,6 +57,6 @@ while [ ! $RETURN -eq 200 ]
 echo ""
 echo "Jenkins is online: http://jenkins-cicd.10.40.3.141.xip.io/login"
 $oc get dc jenkins -o yaml | grep JENKINS -A 1
-
-
-
+# get logs from started build
+# $oc logs builds/playground-pipeline-1
+# Logs are not available via oc command
