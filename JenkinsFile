@@ -23,7 +23,6 @@ node('maven') {
    sh "${mvnCmd} deploy -DskipTests=true"
 
    stage 'Deploy DEV'
-   openshiftCreateResource(namespace:'dev', json:'eap.json' )
    sh "rm -rf oc-build && mkdir -p oc-build/deployments"
    sh "cp target/openshift-tasks.war oc-build/deployments/ROOT.war"
    // clean up. keep the image stream
