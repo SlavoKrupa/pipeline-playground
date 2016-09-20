@@ -2,12 +2,15 @@ node('maven') {
    // define commands
    def ocCmd = "/usr/local/bin/oc --token=`cat /var/run/secrets/kubernetes.io/serviceaccount/token` --server=https://openshift.default.svc.cluster.local --certificate-authority=/run/secrets/kubernetes.io/serviceaccount/ca.crt"
    def mvnCmd = "mvn -s configuration/cicd-settings.xml"
- stage:'Prerequisities'
+   stage:'Prerequisities'
    git url: 'http://gogs:3000/gogs/pipeline-playground.git'
-   openshiftCreateResource(namespace:'dev', jsomyaml:'eap.json' )
+   def eapResource = readFile('eap.json')
+   echo eapResource
+   // remove already created resources
+   openshiftCreateResource('json':eapResource,'namespace':'dev', 'verbose':'false')
+
    stage 'Build'
    git branch: 'eap-7', url: 'http://gogs:3000/gogs/openshift-tasks.git'
-   git url: 'http://gogs:3000/gogs/pipeline-playground.git'
    def v = version()
    sh "${mvnCmd} clean install -DskipTests=true"
 
@@ -20,7 +23,7 @@ node('maven') {
    sh "${mvnCmd} deploy -DskipTests=true"
 
    stage 'Deploy DEV'
-   openshiftCreateResource(namespace:'dev', jsomyaml:'eap.json' )
+   openshiftCreateResource(namespace:'dev', json:'eap.json' )
    sh "rm -rf oc-build && mkdir -p oc-build/deployments"
    sh "cp target/openshift-tasks.war oc-build/deployments/ROOT.war"
    // clean up. keep the image stream
