@@ -5,6 +5,7 @@ node('maven') {
 
    stage 'Build'
    git branch: 'eap-7', url: 'http://gogs:3000/gogs/openshift-tasks.git'
+   git url: 'http://gogs:3000/gogs/pipeline-playground.git'
    def v = version()
    sh "${mvnCmd} clean install -DskipTests=true"
 
@@ -17,6 +18,7 @@ node('maven') {
    sh "${mvnCmd} deploy -DskipTests=true"
 
    stage 'Deploy DEV'
+   openshiftCreateResource(namespace:'dev', jsomyaml:'eap.json' )
    sh "rm -rf oc-build && mkdir -p oc-build/deployments"
    sh "cp target/openshift-tasks.war oc-build/deployments/ROOT.war"
    // clean up. keep the image stream
