@@ -7,6 +7,7 @@ node('maven') {
    def eapResource = readFile('eap.json')
    echo eapResource
    // remove already created resources
+   openshiftDeleteResourceByJsonYaml('json':eapResource,'namespace':'dev', 'verbose':'false')
    openshiftCreateResource('json':eapResource,'namespace':'dev', 'verbose':'false')
 
    stage 'Build'
@@ -26,7 +27,8 @@ node('maven') {
    sh "rm -rf oc-build && mkdir -p oc-build/deployments"
    sh "cp target/openshift-tasks.war oc-build/deployments/ROOT.war"
    // clean up. keep the image stream
-   sh "${ocCmd} delete bc,dc,svc,route -l app=tasks -n dev"
+
+   openshiftDeleteResourceByLabels('types': 'bc,dc,svc,route',keys:'app','values':'tasks','namespace':'dev')
    // create build. override the exit code since it complains about exising imagestream
    sh "${ocCmd} new-build --name=tasks --image-stream=wildfly --binary=true --labels=app=tasks -n dev || true"
    // build image
